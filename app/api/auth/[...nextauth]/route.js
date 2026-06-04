@@ -1,55 +1,6 @@
 import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { connectDB } from "@/lib/mongodb";
-import User from "@/models/User";
+import { authOptions } from "@/lib/auth";
 
-const handler = NextAuth({
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        await connectDB();
-
-        // Find user by email
-        const user = await User.findOne({ email: credentials.email });
-        if (!user) throw new Error("No user found with this email");
-
-        // Check password
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.password,
-        );
-        if (!isValid) throw new Error("Invalid password");
-
-        return { id: user._id.toString(), name: user.name, email: user.email };
-      },
-    }),
-  ],
-
-  callbacks: {
-    // Add user id to the token
-    async jwt({ token, user }) {
-      if (user) token.id = user.id;
-      return token;
-    },
-    // Add user id to the session
-    async session({ session, token }) {
-      session.user.id = token.id;
-      return session;
-    },
-  },
-
-  pages: {
-    signIn: "/login", // custom login page
-  },
-
-  secret: process.env.NEXTAUTH_SECRET,
-  session: { strategy: "jwt" },
-});
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
