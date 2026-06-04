@@ -165,75 +165,82 @@ export default function Home() {
   /* ── Render ─────────────────────────────────────────── */
   return (
     <>
-      {/* ── Sticky top auth bar ──────────────────────── */}
-      <header className="auth-bar">
-        <div className="user-badge">
-          <span className="pulse-dot" />
-          <span><strong>{session?.user?.name || "User"}</strong></span>
+      {/* Nav */}
+      <header className="nav">
+        <span className="nav-logo"></span>
+        <div style={{ flex: 1 }} />
+        <div className="nav-right">
+          <span className="nav-user">
+            {session?.user?.name && <>Hi, <strong>{session.user.name}</strong></>}
+          </span>
+          <button className="btn btn-ghost" onClick={() => signOut()}>
+            Sign out
+          </button>
         </div>
-        <button className="sign-out-btn" onClick={() => signOut()}>
-          <svg suppressHydrationWarning width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          Sign Out
-        </button>
       </header>
 
-      {/* ── Page body ────────────────────────────────── */}
-      <div className="page-content">
-        <div className="app-card animate-in">
+      {/* Page */}
+      <div className="page">
 
-          {/* Toolbar */}
-          <div className="toolbar">
-            <div className="search-wrap">
-              <span className="search-icon">
-                <svg suppressHydrationWarning width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </span>
-              <input
-                className="search-input"
-                placeholder="Search tasks..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <button
-              className="btn-primary"
-              onClick={() => { setEditingTask(null); setTitle(""); setDescription(""); setShowModal(true); }}
-            >
+        
+
+        {/* Toolbar: search + add task on same row */}
+        <div className="toolbar">
+          <div className="search-wrap">
+            <span className="search-icon">
               <svg suppressHydrationWarning width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              Add New Task
+            </span>
+            <input
+              className="search-input"
+              placeholder="Search tasks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <button
+            className="btn btn-primary"
+            style={{ marginLeft: "auto", flexShrink: 0 }}
+            onClick={() => { setEditingTask(null); setTitle(""); setDescription(""); setShowModal(true); }}
+          >
+            <svg suppressHydrationWarning width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+            </svg>
+            Add task
+          </button>
+        </div>
+
+        {/* Filter tabs */}
+        <div className="filter-tabs">
+          {[
+            { key: "all", label: "All" },
+            { key: "uncompleted", label: "Active" },
+            { key: "completed", label: "Done" },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              className={`filter-tab${currentFilter === key ? " active" : ""}`}
+              onClick={() => setCurrentFilter(key)}
+            >
+              {label}
             </button>
-          </div>
+          ))}
+        </div>
 
-          {/* Filter tabs */}
-          <div className="filter-bar">
-            {[
-              { key: "all",         label: "All" },
-              { key: "uncompleted", label: "Uncompleted" },
-              { key: "completed",   label: "Completed" },
-            ].map(({ key, label }) => (
-              <button
-                key={key}
-                className={`filter-tab${currentFilter === key ? " filter-tab--active" : ""}`}
-                onClick={() => setCurrentFilter(key)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* Table */}
+        {/* Table */}
+        <div className="card">
           <table className="task-table">
             <thead>
               <tr>
-                <th style={{ width: "45%" }}>Title</th>
-                <th style={{ width: "22%" }}>Description</th>
-                <th className="col-center" style={{ width: "10%" }}>Status</th>
-                <th className="col-center" style={{ width: "23%" }}>Actions</th>
+                <th style={{ width: "44%" }}>Task</th>
+                <th style={{ width: "28%" }}>Note</th>
+                <th className="center" style={{ width: "10%" }}>
+                  Done
+                </th>
+                <th className="center" style={{ width: "18%" }}>
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -241,12 +248,27 @@ export default function Home() {
                 <tr>
                   <td colSpan="4">
                     <div className="empty-state">
-                      <svg suppressHydrationWarning width="42" height="42" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: "#c8d0de" }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      <svg
+                        suppressHydrationWarning
+                        width="36"
+                        height="36"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        style={{ margin: "0 auto", color: "#d1d5db" }}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="1.5"
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        />
                       </svg>
-                      <p className="empty-state-title">No tasks here</p>
+                      <p className="empty-state-title">No tasks</p>
                       <p className="empty-state-sub">
-                        {searchQuery ? "Try a different search term" : "Click \"+ Add New Task\" to get started"}
+                        {searchQuery
+                          ? "No results for your search"
+                          : "Add a task to get started"}
                       </p>
                     </div>
                   </td>
@@ -261,13 +283,17 @@ export default function Home() {
                     onDragOver={(e) => handleDragOver(e, task._id)}
                     onDragLeave={handleDragLeave}
                     onDrop={(e) => handleDrop(e, task._id)}
-                    className={`task-row${dragOverId === task._id ? " drag-over" : ""}${task.completed ? " completed-row" : ""}`}
+                    className={`task-row${dragOverId === task._id ? " drag-over" : ""}${task.completed ? " done-row" : ""}`}
                   >
                     {/* Title */}
                     <td>
                       <div className="cell-title">
-                        <span className="drag-handle" title="Drag to reorder">⠿</span>
-                        <span className={`task-title-text${task.completed ? " done" : ""}`}>
+                        <span className="drag-handle" title="Drag to reorder">
+                          ⠿
+                        </span>
+                        <span
+                          className={`task-title${task.completed ? " done" : ""}`}
+                        >
                           {task.title}
                         </span>
                       </div>
@@ -275,54 +301,103 @@ export default function Home() {
 
                     {/* Description */}
                     <td>
-                      {task.description
-                        ? <span className={`task-desc-text${task.completed ? " done" : ""}`}>{task.description}</span>
-                        : <span className="task-desc-empty">—</span>
-                      }
+                      {task.description ? (
+                        <span
+                          className={`task-desc${task.completed ? " done" : ""}`}
+                        >
+                          {task.description}
+                        </span>
+                      ) : (
+                        <span className="task-desc-empty">—</span>
+                      )}
                     </td>
 
                     {/* Status */}
-                    <td className="col-center">
+                    <td className="center">
                       <button
-                        className="status-btn"
+                        className={`status-btn${task.completed ? " checked" : ""}`}
                         onClick={() => toggleComplete(task)}
-                        title={task.completed ? "Mark incomplete" : "Mark complete"}
+                        title={
+                          task.completed ? "Mark incomplete" : "Mark complete"
+                        }
                       >
-                        {task.completed ? (
-                          <svg suppressHydrationWarning width="22" height="22" fill="currentColor" viewBox="0 0 20 20" style={{ color: "#10b981" }}>
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                        ) : (
-                          <svg suppressHydrationWarning width="22" height="22" fill="none" stroke="#10b981" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10" strokeWidth="1.75" />
+                        {task.completed && (
+                          <svg
+                            suppressHydrationWarning
+                            width="11"
+                            height="11"
+                            fill="none"
+                            stroke="white"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="3"
+                              d="M5 13l4 4L19 7"
+                            />
                           </svg>
                         )}
                       </button>
                     </td>
 
                     {/* Actions */}
-                    <td className="col-center">
+                    <td className="center">
                       <div className="actions-group">
-                        <button className="action-icon-btn" onClick={() => moveUp(task)} title="Move up">
-                          <svg suppressHydrationWarning width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 15l7-7 7 7" />
+                        <button
+                          className="btn-icon"
+                          onClick={() => moveUp(task)}
+                          title="Move up"
+                        >
+                          <svg
+                            suppressHydrationWarning
+                            width="11"
+                            height="11"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2.5"
+                              d="M5 15l7-7 7 7"
+                            />
                           </svg>
                         </button>
-                        <button className="action-icon-btn" onClick={() => moveDown(task)} title="Move down">
-                          <svg suppressHydrationWarning width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                        <button
+                          className="btn-icon"
+                          onClick={() => moveDown(task)}
+                          title="Move down"
+                        >
+                          <svg
+                            suppressHydrationWarning
+                            width="11"
+                            height="11"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2.5"
+                              d="M19 9l-7 7-7-7"
+                            />
                           </svg>
                         </button>
-                        <button className="action-text-btn edit" onClick={() => openEditModal(task)}>
-                          <svg suppressHydrationWarning width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
+                        <button
+                          className="btn btn-ghost"
+                          style={{ padding: "4px 10px", fontSize: "0.78rem" }}
+                          onClick={() => openEditModal(task)}
+                        >
                           Edit
                         </button>
-                        <button className="action-text-btn delete" onClick={() => deleteTask(task._id)}>
-                          <svg suppressHydrationWarning width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                        <button
+                          className="btn btn-danger"
+                          style={{ padding: "4px 10px", fontSize: "0.78rem" }}
+                          onClick={() => deleteTask(task._id)}
+                        >
                           Delete
                         </button>
                       </div>
@@ -332,23 +407,46 @@ export default function Home() {
               )}
             </tbody>
           </table>
-
-          
         </div>
       </div>
 
-      {/* ── Modal ────────────────────────────────────── */}
+      {/* Modal */}
       {showModal && (
         <div
           className="modal-overlay"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowModal(false);
+          }}
         >
-          <div className="modal-dialog">
-            <h2 className="modal-title">
-              {editingTask ? "Edit Task" : "Add New Task"}
-            </h2>
+          <div className="modal">
+            <div className="modal-header">
+              <h2 className="modal-title">
+                {editingTask ? "Edit task" : "New task"}
+              </h2>
+              <button
+                className="btn-icon"
+                onClick={() => setShowModal(false)}
+                aria-label="Close"
+              >
+                <svg
+                  suppressHydrationWarning
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
             <form onSubmit={handleSubmit}>
-              <div className="field-group">
+              <div className="field">
                 <label className="field-label">Title</label>
                 <input
                   className="field-input"
@@ -359,24 +457,27 @@ export default function Home() {
                   autoFocus
                 />
               </div>
-              <div className="field-group">
+              <div className="field">
                 <label className="field-label">
-                  Description{" "}
-                  <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.65, letterSpacing: 0 }}>(optional)</span>
+                  Note <span>(optional)</span>
                 </label>
                 <textarea
                   className="field-textarea"
-                  placeholder="Add any notes or details..."
+                  placeholder="Any details..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
-              <div className="modal-actions">
-                <button type="button" className="btn-ghost" onClick={() => setShowModal(false)}>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setShowModal(false)}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn-submit">
-                  {editingTask ? "Save Changes" : "Create Task"}
+                <button type="submit" className="btn btn-primary">
+                  {editingTask ? "Save" : "Create"}
                 </button>
               </div>
             </form>
