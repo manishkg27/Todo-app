@@ -13,6 +13,8 @@ export async function PUT(req, { params }) {
 export async function DELETE(req, { params }) {
   await connectDB();
   const { id } = await params;
-  await Todo.findByIdAndDelete(id);
+  // Soft-delete: set deletedAt instead of removing
+  const todo = await Todo.findByIdAndUpdate(id, { deletedAt: new Date() }, { new: true });
+  if (!todo) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ message: "Deleted" });
 }

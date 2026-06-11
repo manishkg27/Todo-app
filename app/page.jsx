@@ -4,14 +4,15 @@ import { useSession, signOut } from "next-auth/react";
 
 export default function Home() {
   const { data: session } = useSession();
-  const [tasks, setTasks]           = useState([]);
-  const [title, setTitle]           = useState("");
+  const [tasks, setTasks] = useState([]);
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentFilter, setCurrentFilter] = useState("all");
   const [editingTask, setEditingTask] = useState(null);
-  const [showModal, setShowModal]   = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [dragOverId, setDragOverId] = useState(null);
+  const [toast, setToast] = useState(null);
 
   const draggedId = useRef(null);
 
@@ -20,10 +21,14 @@ export default function Home() {
     try {
       const res = await fetch("/api/todos");
       if (res.ok) setTasks(await res.json());
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  useEffect(() => { fetchTasks(); }, []);
+  useEffect(() => {
+    fetchTasks();
+  }, []);
 
   /* ── CRUD ───────────────────────────────────────────── */
   const handleSubmit = async (e) => {
@@ -43,9 +48,14 @@ export default function Home() {
           body: JSON.stringify({ title, description }),
         });
       }
-      setTitle(""); setDescription(""); setEditingTask(null); setShowModal(false);
+      setTitle("");
+      setDescription("");
+      setEditingTask(null);
+      setShowModal(false);
       fetchTasks();
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const toggleComplete = async (task) => {
@@ -56,14 +66,18 @@ export default function Home() {
         body: JSON.stringify({ completed: !task.completed }),
       });
       fetchTasks();
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const deleteTask = async (id) => {
     try {
       await fetch(`/api/todos/${id}`, { method: "DELETE" });
       fetchTasks();
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const openEditModal = (task) => {
@@ -80,13 +94,16 @@ export default function Home() {
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesFilter =
-        currentFilter === "all"       ? true
-        : currentFilter === "completed" ? task.completed
-        : !task.completed;
+        currentFilter === "all"
+          ? true
+          : currentFilter === "completed"
+            ? task.completed
+            : !task.completed;
       return matchesSearch && matchesFilter;
     })
     .sort((a, b) => {
-      if (a.completed !== b.completed) return Number(a.completed) - Number(b.completed);
+      if (a.completed !== b.completed)
+        return Number(a.completed) - Number(b.completed);
       return (a.order || 0) - (b.order || 0);
     });
 
@@ -96,13 +113,24 @@ export default function Home() {
     const idx = sorted.findIndex((t) => t._id === task._id);
     let target = -1;
     for (let i = idx - 1; i >= 0; i--) {
-      if (sorted[i].completed === task.completed) { target = i; break; }
+      if (sorted[i].completed === task.completed) {
+        target = i;
+        break;
+      }
     }
     if (target === -1) return;
     const prev = sorted[target];
     await Promise.all([
-      fetch(`/api/todos/${task._id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: prev.order || 0 }) }),
-      fetch(`/api/todos/${prev._id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: task.order || 0 }) }),
+      fetch(`/api/todos/${task._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order: prev.order || 0 }),
+      }),
+      fetch(`/api/todos/${prev._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order: task.order || 0 }),
+      }),
     ]);
     fetchTasks();
   };
@@ -112,21 +140,38 @@ export default function Home() {
     const idx = sorted.findIndex((t) => t._id === task._id);
     let target = -1;
     for (let i = idx + 1; i < sorted.length; i++) {
-      if (sorted[i].completed === task.completed) { target = i; break; }
+      if (sorted[i].completed === task.completed) {
+        target = i;
+        break;
+      }
     }
     if (target === -1) return;
     const next = sorted[target];
     await Promise.all([
-      fetch(`/api/todos/${task._id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: next.order || 0 }) }),
-      fetch(`/api/todos/${next._id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: task.order || 0 }) }),
+      fetch(`/api/todos/${task._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order: next.order || 0 }),
+      }),
+      fetch(`/api/todos/${next._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order: task.order || 0 }),
+      }),
     ]);
     fetchTasks();
   };
 
   /* ── Drag & Drop ────────────────────────────────────── */
-  const handleDragStart = (e, id) => { draggedId.current = id; e.dataTransfer.effectAllowed = "move"; };
-  const handleDragEnd   = ()      => { draggedId.current = null; setDragOverId(null); };
-  const handleDragOver  = (e, id) => {
+  const handleDragStart = (e, id) => {
+    draggedId.current = id;
+    e.dataTransfer.effectAllowed = "move";
+  };
+  const handleDragEnd = () => {
+    draggedId.current = null;
+    setDragOverId(null);
+  };
+  const handleDragOver = (e, id) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     if (id !== draggedId.current) setDragOverId(id);
@@ -140,14 +185,16 @@ export default function Home() {
     if (!fromId || fromId === targetId) return;
     const list = [...filteredTasks];
     const fromIdx = list.findIndex((t) => t._id === fromId);
-    const toIdx   = list.findIndex((t) => t._id === targetId);
+    const toIdx = list.findIndex((t) => t._id === targetId);
     if (fromIdx === -1 || toIdx === -1) return;
     const [dragged] = list.splice(fromIdx, 1);
     list.splice(toIdx, 0, dragged);
     const updates = list.map((t, i) => ({ _id: t._id, order: i }));
     setTasks((prev) => {
       const map = Object.fromEntries(updates.map((u) => [u._id, u.order]));
-      return prev.map((t) => map[t._id] !== undefined ? { ...t, order: map[t._id] } : t);
+      return prev.map((t) =>
+        map[t._id] !== undefined ? { ...t, order: map[t._id] } : t,
+      );
     });
     await Promise.all(
       updates.map(({ _id, order }) =>
@@ -155,12 +202,29 @@ export default function Home() {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ order }),
-        })
-      )
+        }),
+      ),
     );
   };
 
-  const remaining = tasks.filter(t => !t.completed).length;
+  /* ── Restore deleted ──────────────────────────────── */
+  const restoreDeleted = async () => {
+    try {
+      const res = await fetch("/api/todos/restore", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setToast({ type: "success", message: `Restored "${data.title}" successfully!` });
+        fetchTasks();
+      } else {
+        setToast({ type: "warning", message: data.error || "Cannot restore last deleted task." });
+      }
+    } catch (err) {
+      setToast({ type: "warning", message: "Something went wrong. Cannot restore task." });
+    }
+    setTimeout(() => setToast(null), 5000);
+  };
+
+  const remaining = tasks.filter((t) => !t.completed).length;
 
   /* ── Render ─────────────────────────────────────────── */
   return (
@@ -171,7 +235,11 @@ export default function Home() {
         <div style={{ flex: 1 }} />
         <div className="nav-right">
           <span className="nav-user">
-            {session?.user?.name && <>Hi, <strong>{session.user.name}</strong></>}
+            {session?.user?.name && (
+              <>
+                Hi, <strong>{session.user.name}</strong>
+              </>
+            )}
           </span>
           <button className="btn btn-ghost" onClick={() => signOut()}>
             Sign out
@@ -181,15 +249,24 @@ export default function Home() {
 
       {/* Page */}
       <div className="page">
-
-        
-
         {/* Toolbar: search + add task on same row */}
         <div className="toolbar">
           <div className="search-wrap">
             <span className="search-icon">
-              <svg suppressHydrationWarning width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg
+                suppressHydrationWarning
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
             </span>
             <input
@@ -200,12 +277,57 @@ export default function Home() {
             />
           </div>
           <button
-            className="btn btn-primary"
-            style={{ marginLeft: "auto", flexShrink: 0 }}
-            onClick={() => { setEditingTask(null); setTitle(""); setDescription(""); setShowModal(true); }}
+            className="btn btn-restore"
+            style={{ flexShrink: 0 }}
+            onClick={restoreDeleted}
           >
-            <svg suppressHydrationWarning width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+            <svg
+              suppressHydrationWarning
+              width="13"
+              height="13"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                d="M3 10a7 7 0 1114 0 7 7 0 01-14 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                d="M1 4v6h6"
+              />
+            </svg>
+            Restore deleted
+          </button>
+          <button
+            className="btn btn-primary"
+            style={{ flexShrink: 0 }}
+            onClick={() => {
+              setEditingTask(null);
+              setTitle("");
+              setDescription("");
+              setShowModal(true);
+            }}
+          >
+            <svg
+              suppressHydrationWarning
+              width="13"
+              height="13"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                d="M12 4v16m8-8H4"
+              />
             </svg>
             Add task
           </button>
@@ -409,6 +531,16 @@ export default function Home() {
           </table>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`toast toast-${toast.type}`}>
+          <span className="toast-icon">
+            {toast.type === "success" ? "✓" : "⚠"}
+          </span>
+          {toast.message}
+        </div>
+      )}
 
       {/* Modal */}
       {showModal && (

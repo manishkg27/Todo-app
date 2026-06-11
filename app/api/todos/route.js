@@ -10,8 +10,8 @@ export async function GET() {
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Only fetch THIS user's todos
-  const todos = await Todo.find({ userId: session.user.id }).sort({ order: 1 });
+  // Only fetch THIS user's active (non-deleted) todos
+  const todos = await Todo.find({ userId: session.user.id, deletedAt: null }).sort({ order: 1 });
   return NextResponse.json(todos);
 }
 
